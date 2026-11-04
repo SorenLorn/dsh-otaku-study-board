@@ -15,7 +15,7 @@
 | # | 原问题 | 现状 |
 | --- | --- | --- |
 | 1 | 目录不是 git 仓库 | ✅ `git init -b main` + 首个提交 `cb77c93`，202 个文件；remote 已指向 `Ebony-Vinyl/dsh-otaku-study-board`（仓库本身还没建，push 需要你先在 GitHub 建空仓） |
-| 2 | 142 MB 工作区（`reports/` 120 MB + `scripts/ui/.build/` 20 MB） | ✅ 已移出：147 张 PNG + 7 个度量 JSON 归档到 `%TEMP%\sorchron-reports-archive-20261104`（可找回），编译产物删除；工作区 **3.6 MB**，`.git` 1.9 MB |
+| 2 | 142 MB 工作区（`reports/` 120 MB + `scripts/ui/.build/` 20 MB） | ✅ 已彻底删除：147 张 PNG + 7 个度量 JSON 直接删掉（需要时由截图脚本重跑），编译产物删除；工作区 **3.7 MB**，`.git` 1.9 MB |
 | 3 | peer 范围排除 `0.2.1-rc.2` | ✅ 补了 `\|\| >=0.2.1-rc.1 <0.3.0-0` 两条分支，实测 `0.2.1-rc.2` 现在通过 |
 | 4 | 缺 `repository` 字段 | ✅ 已补 `repository` / `homepage` / `bugs`（指向 `Ebony-Vinyl/dsh-otaku-study-board`） |
 | 5 | 缺 `screenshots.json` / 安装命令 | ✅ 新增 `screenshots.json` + `assets/screenshots/` 四张 1280px JPEG（共 392 KB）；README §5 增加「从仓库安装」一段 |
@@ -82,9 +82,11 @@ README / .gitignore / license），然后 `git push -u origin main`。
 
 工作区从 **142 MB → 3.6 MB**（`.git` 1.9 MB）：
 
-- 147 张 PNG + 7 个度量 JSON 移出到 `%TEMP%/sorchron-reports-archive-20261104/`（可找回，
-  也能由 `scripts/ui/*-shot.mjs`、`*-browser.test.mjs` 重新生成）；
+- 147 张 PNG + 7 个度量 JSON **彻底删除**（不保留副本；需要时由 `scripts/ui/*-shot.mjs`、
+  `*-browser.test.mjs` 重新生成）；
 - `scripts/ui/.build/`（20 MB）与 `smoke.cjs` 删除；
+- `%TEMP%/sorchron-*` 下测试留下的 12 个临时目录（Chromium profile 与 harness 构建产物，
+  共 472 MB，含上面的归档）一并清空；
 - 精选 4 张 1280px JPEG 放进 `assets/screenshots/`（共 392 KB），由 `screenshots.json` 引用。
 
 `.gitignore`（**保留 `lib/`**，因为 `main` 指向它、且没有构建脚本兜底）：
