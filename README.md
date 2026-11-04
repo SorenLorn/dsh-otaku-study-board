@@ -66,7 +66,7 @@ scripts/
   register-check.mjs          # 13 项注册/样式/slot 检查
   smoke.ts                    # 415 项纯逻辑
   ui/*.test.ts(x)|mjs         # 22 个测试套件（jsdom / 纯逻辑 / Chromium）
-docs/ reports/                # 阶段审计与报告（历史留档，不代表当前状态）
+docs/ reports/                # 设计依据与审计（只留对当前代码仍然成立的；更早的阶段报告在 git 历史里）
 ```
 
 ## 5. 安装（作为 DSH 插件）

@@ -124,7 +124,7 @@
   **宿主内交互验证标记为 NOT VERIFIED**。
 - **另需注意**：本阶段改过 Dashboard/DetailContent 的文案（删掉一个假按钮），宿主内存里仍是
   启动时（11:17）加载的旧 bundle；要看到改动需重载窗口或重启宿主，**本次未执行**。
-- **临时规避**：重载 DSH 窗口后手工过一遍 `docs/FINAL-RELEASE-AUDIT.md` §E 的清单。
+- **临时规避**：重载 DSH 窗口后手工过一遍 `FINAL-RELEASE-AUDIT.md` §E 的清单。
 
 ### D2. 离开 Dashboard 后计时器不 tick（P3）
 

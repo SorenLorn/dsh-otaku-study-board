@@ -1134,7 +1134,7 @@ console.log('\n[23] V4 schema 兜底')
   check('aiAutoDaily 默认关闭', coerceSettings({}).aiAutoDaily === false)
 }
 
-console.log('\n[24] 审计回归（docs/V4-QUALITY-AUDIT.md 对应缺陷）')
+console.log('\n[24] 审计回归（早期质量审计发现的缺陷，文档已归档到 git 历史）')
 {
   /* ── A1/A2：排期时间不能被「事件时间钳制」压成 24 小时 ── */
   const DAY = 86_400_000
@@ -1447,7 +1447,7 @@ function settingsForBackupRef(): BoardSettings {
   }
 }
 
-console.log('\n[27] 第二轮集成审计回归（docs/V4-INTEGRATION-AUDIT.md）')
+console.log('\n[27] 第二轮集成审计回归（早期集成审计发现的残余缺陷）')
 {
   /* ── NEW-01：配额满时「读」不能被误判成存储禁用 ── */
   __resetMemoryStore()
