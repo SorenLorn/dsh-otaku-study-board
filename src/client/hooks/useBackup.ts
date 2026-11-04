@@ -7,7 +7,7 @@
  *   • `exportAll` —— `prepareExport` + 下载，失败如实返回 false；
  *   • `clearAll` —— 一次事务清空 14 个键，失败回滚并返回真实结果。
  *
- * Phase 5.3 的两处必要修正（详见 reports/PHASE-5.3-PRE-IMPLEMENTATION-AUDIT.md）：
+ * 两处必要修正（数据层约束见 ARCHITECTURE.md §2.5）：
  *   1. 原来的 `clearAll` 只清 7 个键，memory / knowledge / reviews / timeline /
  *      history / daily 会残留；而且逐个 `writeStore` 没有回滚。
  *   2. 导出原来只有布尔结果，无法展示大小与时间。

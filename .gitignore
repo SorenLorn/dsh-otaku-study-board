@@ -1,21 +1,33 @@
-# 依赖
+# ── 依赖 ──────────────────────────────────────────────
 node_modules/
 
-# 构建 / 测试产物（可由 README §5 的命令重新生成）
+# ── 构建 / 测试产物（可由 build + 测试命令重新生成）──
 scripts/ui/.build/
 scripts/ui/.build-*/
 smoke.cjs
 *.tsbuildinfo
 
-# 截图与度量输出：由 scripts/ui/*-shot.mjs 与 *-browser.test.mjs 生成
-# 只忽略图片与 JSON，reports/*.md（阶段审计）仍然入库
-reports/*.png
-reports/*.jpg
-reports/*.jpeg
-reports/*.json
+# ── 截图与度量产物（scripts/ui/*-shot.mjs、*-browser.test.mjs 生成）──
+# reports/ 只是产物目录：图片、JSON 一律不入库；
+# 阶段报告 / 审计记录 / 开发总结同样不许入库 —— 公开文档只有根目录那 5 份 md。
+reports/*
+!reports/.gitkeep
 
-# 本机 / 工具状态
+# ── npm 打包产物 ──────────────────────────────────────
+*.tgz
+
+# ── 本机 / 工具状态 ───────────────────────────────────
 .workbuddy/
 .DS_Store
 Thumbs.db
 *.log
+.vscode/
+.idea/
+
+# ── 环境变量 ──────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── npm 缓存 ──────────────────────────────────────────
+.npm

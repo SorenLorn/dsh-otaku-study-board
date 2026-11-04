@@ -2,8 +2,8 @@
 
 写给接手这个仓库的人。目标：十分钟内知道「数据从哪来、写到哪去、哪一块不能随便动」。
 
-> 适用范围：`4.0.0-rc.1`（Phase 6 收尾）。历史阶段报告在 `docs/`、`reports/`，里面很多结论
-> 已被后续阶段推翻，**以代码与本文件为准**。
+> 适用范围：`4.0.0-rc.1`。本文件只描述**当前代码**。所有踩过的坑与不可动摇的约束都写在下面，
+> 不再另存历史阶段报告 —— 想追旧决策请查 git 历史，想改代码只读这一份。
 
 ---
 
@@ -86,6 +86,20 @@ writeTransaction(store, [{ key, value }, ...])
 统一用 `coercePayload(key, data)` 洗一遍：字段缺失给默认值、类型不对就丢弃该条并计数。
 **没有迁移脚本**，只有「读时补齐」，因为数据在用户浏览器里，迁移脚本跑不成的场景太多。
 
+### 2.5 备份与导入（`lib/backup.ts` / `hooks/useBackup.ts` / `v4/useDataTransfer.ts`）
+
+- **导出恒写 12 个实体字段**（`BACKUP_KEYS`：tasks / logs / projects / settings / friction / meta /
+  memory / knowledge / reviews / timeline / history / daily），缺省也写空值。这条不能改成
+  「调用方传了才写」—— 漏传一个键就是静默丢一份数据。
+- **导入是一条固定流水线**：大小预挡（>16 MB 直接拒绝）→ `parseBackup`（JSON / kind / 必填键 /
+  条数上限；坏记录逐条丢弃并**回报丢弃条数**）→ `previewImport`（只读，不写库）→
+  用户确认「合并 / 覆盖」→ `applyImport` → 快照裁剪 → **一次 `writeTransaction` 写 12 个键**。
+- **合并语义**：实体按 id 取备份侧（本地独有保留）；记忆取 `version` 更高的一份；知识节点按 id
+  覆盖、`related` 边无向去重、悬空边丢弃；**日聚合按天覆盖而不是累加**（恢复语义）。
+- **清空是另一条路径**：`clearAll` 一次事务写 **14 个键**（比备份多 `timer` 与 `aiRuns`），
+  失败回滚并返回真实原因。
+- **没有跨标签导入锁**：两个标签同时导入时后写覆盖先写，不报冲突；设置页「能力边界」里明写。
+
 ---
 
 ## 3. Actions 层
@@ -156,6 +170,11 @@ BoardPage（src/client/index.tsx）
   取回全长，误判成 `idle` 会换掉 `roundId`。
 - **结束时刻取 `min(now, deadline)`**：睡眠跨午夜回来时按 deadline 归属，否则热力图日期错。
 - `completed` 是持久态（剩余留 0 不回满），真实分钟另存 `lastMinutes`。
+- **幂等三层**：`timer.roundId`（同一轮只有一个 id）→ 日志 id（`finishFocus` 见到同 id 直接返回空）
+  → `settleFocus` 的重复判定。没有 roundId 的老状态用 `focus-<startedAt.toString(36)>` 派生，
+  所以刷新重放、双标签同时结算都只会记一笔。
+- **`daily.sessions` 的口径是「非 focus 日志条数」**：`addSessionLog` 时 +1、`deleteLog(s)` 时 -1，
+  **不进 `focusMinutes`**。任何新增写日志的路径都必须同步这两条，否则与 `rebuildDaily` 不一致。
 
 ---
 
@@ -203,7 +222,7 @@ settleFocus(input)
 ### 6.4 `pendingResult` 生命周期
 
 `endRound` 产生 → 结算失败保留（并补基线）→ 四实体通过才清 → `retryPending` 带 `before` 重放 →
-挂载自动重试一次 → `discardPending` **只清标记，不删已落盘数据** → 未保存时 UI **不渲染**
+挂载自动重试一次 → 用户点「放弃这一笔」走 6.7 的证明流程 → 未保存时 UI **不渲染**
 「开始下一轮」（reset 会清掉 pending）。
 
 `timer` 是瞬态键、不进备份，所以这一整套不污染备份格式。
@@ -221,6 +240,34 @@ settleFocus(input)
 
 **不能**：localStorage 无锁无 CAS，跨不同 round 的并发写入会后写覆盖先写且**无法检测**；
 基线丢失且数据被第三方改动时只能报「无法确定」，由人决定。
+
+### 6.7 「放弃这一笔」的安全边界（`planDiscard` / `discardSettlement`）
+
+放弃**不是**「清掉标记」那么简单。它只做一件事：**在能证明的前提下，把本轮自己写的痕迹删掉**。
+
+**只允许删两样**，都靠 roundId 唯一定位：
+
+```ts
+logs     = state.logs.filter(log => log.id !== result.roundId)
+timeline = state.timeline.filter(e => !(e.type === 'focus.completed' && e.refId === result.roundId))
+```
+
+`daily` / `task` **一个字节都不写** —— 只有在证明它们从未被本轮改过之后，才允许删日志与事件。
+
+**判据（缺一即拒绝）**：日志至多 1 条且 `kind==='focus'`、分钟 / 日期 / `taskId` 都与本轮一致；
+`daily` 有同日基线且当前值仍等于基线；任务仍在时 `focusedMinutes` 与 `pomodoros` 都仍等于基线。
+
+**「日志没了」不等于「可以放行」**：事务顺序是 logs → tasks → daily → timeline，回滚失败会留下
+「日志已回滚、Daily 却加上了」。所以即使本轮在日志和事件里都找不到痕迹，`daily` / `task` 的
+基线校验也照常跑 —— 否则那 18 分钟会永久留在日聚合里，没有任何日志支撑。
+
+**执行**：删除与「清 `pendingResult`」在**同一个事务**里；只写真的变了的键；写后回读校验，
+校验不过就把标记**写回原值**，绝不留「标记没了、数据还在」。
+
+**刻意拒绝的一类**：日聚合或任务**已经累计**时一律不给放弃 —— 这两个实体里没有 roundId，
+扣减只能猜，猜错扣的是别人的有效记录。出口是「重试写入」。
+（结构与取舍见 `KNOWN-LIMITATIONS.md` A2；界面三态：`已记入` / `未保存` / `已放弃`，
+刷新后由「存储里有没有 `at === 本轮 endedAt` 的 focus 日志」推导，不靠内存状态。）
 
 ---
 
@@ -245,14 +292,21 @@ window 桥 ─┘        │ 防抖 + 内容哈希去重
 
 ## 8. History 聚合与统计口径
 
-- 热力图 / 活跃分都用 `lib/activity.ts`：`score = focusMinutes + tasksDone × 25`，色阶 `[1,25,60,120]`；
+- 热力图 / 活跃分都用 `lib/activity.ts`：`score = focusMinutes + tasksDone × 25`，
+  色阶阈值 `[1, 25, 60, 120]`（0 分永远是空档）。这五个档是**产品规则**，不是科学标准，
+  不要为某一处显示另算一套。
 - **去重优先级**：`daily` 聚合优先，`logs` 只作补充，取 `max(daily, logs)`；日志按 `id` 去重；
-  `timeline` 只用于明细展示，**永不参与计数**（否则一次专注会被算三遍）；
-- 日期键一律走本地日键 `YYYY-MM-DD`（`lib/daily` / `lib/time`），**不要**用 `toISOString()` 切 UTC；
+  `timeline` 只用于明细展示，**永不参与计数**（否则一次专注会被算三遍）。
+- **专注次数 `focusCount`**：有效 focus 日志条数。只剩 `daily` 聚合的老日子（日志已超出 400 条
+  上限被裁）按下限记 **1 次** —— 是下限，不编造具体条数。
+- **连续天数**：活跃 = `score > 0`。最长连续取窗口内最大连跑；当前连续在今天没活动时**从昨天起算**
+  （与 `stats.countStreak` 的产品规则一致，避免早上打开就显示 0）。两个指标都只在所选窗口内算，
+  40 天连续在 30 天视图里显示 30。
+- 日期键一律走本地日键 `YYYY-MM-DD`（`lib/daily` / `lib/time`），**不要**用 `toISOString()` 切 UTC。
 - 历史页是只读视图：不写库、不触发 `applyDailyDelta`、不重构 daily。
-- **Dashboard 首页的全年热力图与历史页共用 `v4/Heatmap.tsx` + `lib/activity.ts`**（Phase 6.2）：
+- **Dashboard 首页的全年热力图与历史页共用 `v4/Heatmap.tsx` + `lib/activity.ts`**：
   两处都调 `buildActivityWindow({range:365})`，同一天的颜色/数字是同一份聚合算出来的；
-  组件只渲染不统计，禁止在页面里另写一套求和。
+  组件只渲染不统计，禁止在页面里另写一套求和。历史页额外提供 30 / 90 / 365 天切换。
 
 ---
 
@@ -273,10 +327,11 @@ window 桥 ─┘        │ 防抖 + 内容哈希去重
 | 层 | 套件 | 怎么跑 |
 | --- | --- | --- |
 | 纯逻辑 | `smoke.ts` / `activity` / `focus` / `settlement` | esbuild 打成 cjs 后 `node` |
-| jsdom | `components` / `workbench` / `data` / `history` / `focus-ui` / `recovery-ui` | 同上，额外 `--external:jsdom` |
-| Chromium | 11 个 `*-browser.test.mjs` + `focus-multi-tab` | 起独立 Chrome（`--headless=new` + CDP），页面来自 `scripts/ui/*-harness.tsx` |
+| jsdom | `components` / `workbench` / `data` / `history` / `focus-ui` / `recovery-ui` / `dashboard-heat` | 同上，额外 `--external:jsdom` |
+| Chromium | 11 个 `*-browser.test.mjs` + `focus-multi-tab` + `v3-hover` | 起独立 Chrome（`--headless=new` + CDP），页面来自 `scripts/ui/*-harness.tsx` |
 
-没有 jest / vitest，断言就是 `check(name, ok, detail)` 往数组里 push。命令与计数见 `TESTING.md`。
+没有 jest / vitest，断言就是 `check(name, ok, detail)` 往数组里 push。共 22 个套件，
+命令、基线与未覆盖场景见 [`TESTING.md`](./TESTING.md)。
 
 ---
 
@@ -286,5 +341,5 @@ window 桥 ─┘        │ 防抖 + 内容哈希去重
   `ctx.get('llm')` 只有 provider 注册表、没有生成接口；`settings.describe()` 拿不到密钥；
   没有 `commands.register`。所以任何「AI 能力」都得自带配置，不能借宿主密钥。
 - 主题：宿主在 `body` 上打 `data-ds-dark-theme`，只能靠它判断深浅色。
-- 真实宿主内的验收（页面加载、采集通道、深浅色、抽屉层级）**尚未在 Phase 6 完成**，
-  原因见 `KNOWN-LIMITATIONS.md` §DSH 宿主。
+- 真实宿主内的验收（页面加载、采集通道、深浅色、抽屉层级）**尚未由本仓库自动化覆盖**，
+  需要人工过一遍，清单见 `TESTING.md` 末尾与 `KNOWN-LIMITATIONS.md`。

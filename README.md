@@ -12,10 +12,11 @@ backup — for people who study or code solo and want their records to stay on t
 ## 1. 项目定位
 
 - **一种人**：长期自学 / 独立开发，用「任务 + 专注时长 + 会话记录」衡量自己的投入。
-- **一个界面**：Phase 5.2 起只有**一套**统一工作台（V4）。V3 的卡片界面不再渲染，源码与旧数据
-  兼容逻辑保留（见 §7）。
+- **一个界面**：只有**一套**统一工作台 —— Dashboard、任务、历史、数据四个页面。
+  旧的卡片界面不再渲染，但它的源码与旧数据兼容逻辑保留（见 §8）。
 - **一条红线**：不假装成功。写不进去就说「未保存」，判断不了就说「无法确定」，没做的功能明确
   标「尚未开放」，绝不提供一个点了没反应的按钮。
+- **不联网**：没有账号、没有遥测、没有请求；所有数字都来自你自己的 `localStorage`。
 
 ## 2. 核心功能（已上线）
 
@@ -31,13 +32,25 @@ backup — for people who study or code solo and want their records to stay on t
 
 未上线能力见 [`KNOWN-LIMITATIONS.md`](./KNOWN-LIMITATIONS.md)，产品内也可从顶部「迁移计划」查看。
 
-## 3. 技术栈
+## 3. 截图
+
+| Dashboard（首页，含全年热力图） | 专注计时 |
+| --- | --- |
+| ![Dashboard](https://raw.githubusercontent.com/Ebony-Vinyl/dsh-otaku-study-board/main/assets/screenshots/dashboard-light-1440.jpg) | ![Focus](https://raw.githubusercontent.com/Ebony-Vinyl/dsh-otaku-study-board/main/assets/screenshots/focus-1440.jpg) |
+
+| 深色主题 | 任务页 |
+| --- | --- |
+| ![Dark](https://raw.githubusercontent.com/Ebony-Vinyl/dsh-otaku-study-board/main/assets/screenshots/dashboard-dark-1440.jpg) | ![Tasks](https://raw.githubusercontent.com/Ebony-Vinyl/dsh-otaku-study-board/main/assets/screenshots/tasks-1440.jpg) |
+
+> 截图来自独立 Chromium（真实组件 + 真实样式，1440px），里面的数字是演示数据。
+
+## 4. 技术栈
 
 React 18（函数组件 + hooks）· TypeScript 5.6（`strict`）· esbuild 0.25（两个产物，无打包器配置
 文件）· cordis（DSH 插件运行时）· 手写设计系统（`.v4-*` CSS 命名空间，约 4.9k 行）·
 测试：jsdom + @testing-library/react + 独立 Chromium（CDP），**无 jest / vitest**。
 
-## 4. 目录结构
+## 5. 目录结构
 
 ```
 src/
@@ -60,16 +73,18 @@ src/
       daily.ts activity.ts heatmap.ts stats.ts history.ts backup.ts schema.ts
       repo/                   # V4 实体的仓储端口（persistent / memory / blocked 三态）
     style/board.css           # 全部样式，构建时内联进 bundle
-    board/ charts/ ui/        # V3 组件（保留、不参与渲染，见 §7）
+    board/ charts/ ui/        # V3 组件（保留、不参与渲染，见 §8）
 scripts/
   build.mjs                   # 产物：lib/index.js + lib/client.js
   register-check.mjs          # 13 项注册/样式/slot 检查
   smoke.ts                    # 415 项纯逻辑
   ui/*.test.ts(x)|mjs         # 22 个测试套件（jsdom / 纯逻辑 / Chromium）
-docs/ reports/                # 设计依据与审计（只留对当前代码仍然成立的；更早的阶段报告在 git 历史里）
+assets/screenshots/           # 市场与 README 用的截图
+reports/                      # 截图与度量的输出目录（内容不进仓库）
+docs/                         # 插件市场收录条目模板
 ```
 
-## 5. 安装（作为 DSH 插件）
+## 6. 安装（作为 DSH 插件）
 
 **从仓库安装（推荐）**
 
@@ -97,6 +112,16 @@ dsh plugin --profile desktop list   # 应能看到 dsh-otaku-study-board
 左侧导航栏会出现 **溯时学习工作台**（时钟图标，order 20，排在「插件」「自动化任务」之后），
 点击后主区切换为工作台页面。
 
+### 第一次使用（四步）
+
+1. **跑一轮专注**：Dashboard → 专注卡 →「开始专注」（默认 25 分钟，展开设置可改 5–90 分钟）。
+   中途可暂停，结束后点「结束并记录」。
+2. **记一件事**：任务页 →「新建」→ 填标题 → 在列表里勾选完成。
+3. **看反馈**：首页「学习活动」热力图当天格子会变色；悬停看当天数字，点格子开当天详情。
+4. **备份一次**：顶部「数据」→ 导出 JSON。数据只在本机浏览器里，换浏览器 / 清缓存会丢。
+
+每个按钮的完整说明见 [`USER-GUIDE.md`](./USER-GUIDE.md)。
+
 > **路径注意（Windows）**：如果检出路径里含 `‑`（U+2011 非断字连字符，作者本机的历史目录名），
 > esbuild 的 postinstall 会通过 `cmd.exe` 校验二进制，默认代码页会把它弄乱，`npm install` 可能报
 > `Command failed: ...\esbuild.exe --version`。两种解法：把目录改成纯 ASCII（推荐，正常从
@@ -106,11 +131,11 @@ dsh plugin --profile desktop list   # 应能看到 dsh-otaku-study-board
 > 安装目录可以是符号链接：桌面 profile 里 `node_modules/dsh-otaku-study-board` 指向本仓库时，
 > 改完源码跑一次 `npm run build` 即可，重载窗口生效，不需要重新安装。
 
-## 6. 开发与构建
+## 7. 开发与构建
 
 ```bash
 npm run typecheck     # tsc --noEmit（必须 0 错误）
-npm run build         # 两个产物；client.js 约 520 KB
+npm run build         # 两个产物；client.js 约 530 KB
 npm run clean         # 删掉 lib/
 ```
 
@@ -124,28 +149,31 @@ npx esbuild scripts/smoke.ts --bundle --platform=node --format=cjs --outfile=smo
 关于设计约束（后端能力、宿主 API 实测结论、结算事务为什么长这样），先读
 [`ARCHITECTURE.md`](./ARCHITECTURE.md) —— 尤其是 `lib/settlement.ts` 开头那段注释。
 
-## 7. 关于 V3 代码与旧数据
+## 8. 关于 V3 代码与旧数据
 
 - `src/client/board/`、`src/client/charts/`、`src/client/ui/ConfirmDialog.tsx` 以及
   `hooks/useProject|useContextStats|useFrictionLog|useSlashCommand`、`lib/commands|context|snapshot|subtask`
-  **不在客户端 bundle 里**（用 esbuild metafile 实测，60/87 个源文件进 bundle）。
+  **不在客户端 bundle 里**（用 esbuild metafile 实测，60/88 个源文件进 bundle）。
 - 它们保留的原因：**旧数据兼容与后续迁移的参考实现**，不是死代码可随手删。删除前必须确认
   14 个存储键的读写兼容不受影响。
 - 旧数据读取：`lib/schema.ts` 的 `unwrapEnvelope` 接受 V1（裸数组）、V2、V3（信封）与 V4，
   读时补齐字段、打开页面不写回。
 
-## 8. 本地数据
+## 9. 本地数据
 
 - 14 个 `localStorage` 键，前缀 `dsh-otaku-study-board:`，写入信封 `{ schemaVersion: 4, data }`。
 - `timer` 是瞬态键（不进备份）；`aiRuns` 是审计键（不进备份、不参与统计）。
 - 换浏览器 / 清缓存 = 数据消失。定期用「数据 → 导出」保存 JSON。
 
-## 9. 已知限制
+## 10. 已知限制
 
-见 [`KNOWN-LIMITATIONS.md`](./KNOWN-LIMITATIONS.md)。最短版本：多标签页跨轮次并发写入没有锁
-（localStorage 无 CAS）、日聚合没有项目维度、会话日志逐个明细与部分 V3 能力尚未迁移、
-真实 DSH 宿主内的验收仍需人工确认。
+完整清单见 [`KNOWN-LIMITATIONS.md`](./KNOWN-LIMITATIONS.md)。最短版本四条：
 
-## 10. License
+- **多标签页跨轮次并发写入会丢一笔**：本地存储没有锁，也没有 CAS。
+- **日聚合没有项目维度**：历史与热力图始终是全部项目。
+- **部分能力只读**：子任务、项目结构、知识节点、记忆的写入口尚未迁移（界面里明确标注）。
+- **真实 DSH 宿主内的人工验收尚未完成**：宿主不开放调试端口，本仓库只做到独立浏览器验证。
+
+## 11. License
 
 MIT
