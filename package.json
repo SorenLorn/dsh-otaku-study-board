@@ -8,11 +8,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Ebony-Vinyl/dsh-otaku-study-board.git"
+    "url": "git+https://github.com/SorenLorn/dsh-otaku-study-board.git"
   },
-  "homepage": "https://github.com/Ebony-Vinyl/dsh-otaku-study-board#readme",
+  "homepage": "https://github.com/SorenLorn/dsh-otaku-study-board#readme",
   "bugs": {
-    "url": "https://github.com/Ebony-Vinyl/dsh-otaku-study-board/issues"
+    "url": "https://github.com/SorenLorn/dsh-otaku-study-board/issues"
   },
   "type": "module",
   "main": "./lib/index.js",

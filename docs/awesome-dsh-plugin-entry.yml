@@ -1,10 +1,10 @@
 # 投稿文件（awesome-dsh-plugin）
 #
-# 用法：把本文件复制到列表仓库的 `data/plugins/Ebony-Vinyl__dsh-otaku-study-board.yml`
+# 用法：把本文件复制到列表仓库的 `data/plugins/SorenLorn__dsh-otaku-study-board.yml`
 # 一个 PR 只加这一个文件；两个 README 由对方脚本生成，不要手工改。
 # 投稿前确认：仓库已加 `dsh-plugin` topic、创建满 1 天。
-url: https://github.com/Ebony-Vinyl/dsh-otaku-study-board
-name: Ebony-Vinyl/dsh-otaku-study-board
+url: https://github.com/SorenLorn/dsh-otaku-study-board
+name: SorenLorn/dsh-otaku-study-board
 category: ui
 description:
   en: A local-first study workbench for DSH with a dashboard, tasks, a pomodoro timer with crash-safe settlement, session capture, a 365-day activity heatmap, and JSON backup.

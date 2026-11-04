@@ -36,11 +36,11 @@ backup — for people who study or code solo and want their records to stay on t
 
 | Dashboard（首页，含全年热力图） | 专注计时 |
 | --- | --- |
-| ![Dashboard](https://raw.githubusercontent.com/Ebony-Vinyl/dsh-otaku-study-board/main/assets/screenshots/dashboard-light-1440.jpg) | ![Focus](https://raw.githubusercontent.com/Ebony-Vinyl/dsh-otaku-study-board/main/assets/screenshots/focus-1440.jpg) |
+| ![Dashboard](https://raw.githubusercontent.com/SorenLorn/dsh-otaku-study-board/main/assets/screenshots/dashboard-light-1440.jpg) | ![Focus](https://raw.githubusercontent.com/SorenLorn/dsh-otaku-study-board/main/assets/screenshots/focus-1440.jpg) |
 
 | 深色主题 | 任务页 |
 | --- | --- |
-| ![Dark](https://raw.githubusercontent.com/Ebony-Vinyl/dsh-otaku-study-board/main/assets/screenshots/dashboard-dark-1440.jpg) | ![Tasks](https://raw.githubusercontent.com/Ebony-Vinyl/dsh-otaku-study-board/main/assets/screenshots/tasks-1440.jpg) |
+| ![Dark](https://raw.githubusercontent.com/SorenLorn/dsh-otaku-study-board/main/assets/screenshots/dashboard-dark-1440.jpg) | ![Tasks](https://raw.githubusercontent.com/SorenLorn/dsh-otaku-study-board/main/assets/screenshots/tasks-1440.jpg) |
 
 > 截图来自独立 Chromium（真实组件 + 真实样式，1440px），里面的数字是演示数据。
 
@@ -89,7 +89,7 @@ docs/                         # 插件市场收录条目模板
 **从仓库安装（推荐）**
 
 ```bash
-dsh plugin --profile desktop add github:Ebony-Vinyl/dsh-otaku-study-board
+dsh plugin --profile desktop add github:SorenLorn/dsh-otaku-study-board
 ```
 
 `lib/` 随仓库提供，不需要在本地构建；装完重载窗口，左侧导航出现 **溯时学习工作台**。
