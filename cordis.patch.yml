@@ -1,0 +1,17 @@
+# Sorchron Study Board（溯时学习工作台）— bundle activation manifest
+#
+# `dsh plugin --profile web add <path>` reads package.json → `dsh.bundle.patch`,
+# finds this file, and appends the row below into the *profile* layer. Without
+# it the package installs but is never loaded (dsh warns "declares no
+# dsh.bundle", and the plugin market rejects the package as `not-a-bundle`).
+#
+# Exactly one row is needed: mount the package itself. The host half has no
+# config in V1 — the left-nav entry and the page it opens are registered purely
+# from the client bundle (src/client/index.tsx).
+#
+# `id` is the plugin-tree identity (must be unique in a profile).
+# `name` is the npm package name the loader imports — it is the install
+# identity and intentionally NOT renamed to the display name (see README).
+- insert:
+    - id: otaku-study-board
+      name: dsh-otaku-study-board
