@@ -1,179 +1,196 @@
 # Sorchron Study Board · 溯时学习工作台
 
-A local-first study workbench for **DSH (DeepSeek Harness)**. One workspace — dashboard, tasks,
-pomodoro focus timer with crash-safe settlement, Harness session capture, activity history and JSON
-backup — for people who study or code solo and want their records to stay on their own machine.
+**English** | [中文](./README.zh.md)
 
-> **Version** `4.0.0-rc.1` · license MIT · no network calls, no account, no telemetry.
-> Every number you see comes from your own `localStorage`.
+A DSH (DeepSeek Harness) plugin that adds one left-nav panel for solo study and coding:
+a dashboard, a task list, a pomodoro focus timer with crash-safe settlement, Harness session
+capture, a 365-day activity heatmap and JSON backup/restore. All records stay in the browser's
+`localStorage`; the plugin makes no network requests.
+
+`4.0.0-rc.1` · MIT · no account, no telemetry, no network calls
 
 ---
 
-## 1. 项目定位
+## ✨ Features
 
-- **一种人**：长期自学 / 独立开发，用「任务 + 专注时长 + 会话记录」衡量自己的投入。
-- **一个界面**：只有**一套**统一工作台 —— Dashboard、任务、历史、数据四个页面。
-  旧的卡片界面不再渲染，但它的源码与旧数据兼容逻辑保留（见 §8）。
-- **一条红线**：不假装成功。写不进去就说「未保存」，判断不了就说「无法确定」，没做的功能明确
-  标「尚未开放」，绝不提供一个点了没反应的按钮。
-- **不联网**：没有账号、没有遥测、没有请求；所有数字都来自你自己的 `localStorage`。
+The panel has four pages: **Dashboard**, **Tasks**, **History** and **Settings** (opened from the
+top bar as “Data” / 数据). Everything below is implemented and reachable from the UI — there are no
+placeholder buttons.
 
-## 2. 核心功能（已上线）
-
-| 功能 | 状态 | 说明 |
-| --- | --- | --- |
-| Dashboard | ✅ | 4 个指标（任务 / 完成 / 专注 / 连续）+ 今日任务 + 专注卡 + 项目进度 + **全年学习热力图** + 近 7 日趋势 + 最近活动 + 知识与记忆只读概览 |
-| 任务 | ✅ | 新建 / 编辑 / 勾选完成 / 重开 / 两步确认删除 / 搜索 / 排序 / 状态筛选 / 行内展开 / 详情抽屉 |
-| 专注计时 | ✅ | 时间戳计时、暂停继续、短休长休、任务绑定、结束结算、失败重试、刷新与多标签不重复记账 |
-| 会话采集 | ✅ | 挂在工作台根节点，接收 DSH 事件与会话数据，只计「会话条数」，不进专注分钟 |
-| 历史 | ✅ | 30 / 90 / 365 天热力图（五档强度，与首页同一组件同一份聚合）、活跃天数、按天时间轴、连续学习 |
-| 备份 / 恢复 | ✅ | 全量 / 近 7 天 / 当月导出，导入预览、合并或覆盖、事务回滚、存储观测、二次确认清空 |
-| 设置 | ✅ | 数据概览、会话采集开关、存储状态、导出、导入、危险区、能力边界 |
-
-未上线能力见 [`KNOWN-LIMITATIONS.md`](./KNOWN-LIMITATIONS.md)，产品内也可从顶部「迁移计划」查看。
-
-## 3. 截图
-
-| Dashboard（首页，含全年热力图） | 专注计时 |
+| Area | What it actually does |
 | --- | --- |
-| ![Dashboard](https://raw.githubusercontent.com/SorenLorn/dsh-otaku-study-board/main/assets/screenshots/dashboard-light-1440.jpg) | ![Focus](https://raw.githubusercontent.com/SorenLorn/dsh-otaku-study-board/main/assets/screenshots/focus-1440.jpg) |
+| **Dashboard** | Four summary metrics (tasks, completed, focus time, streak), today's tasks with inline check-off, a focus card, per-project progress, a 365-day activity heatmap, a 7-day trend, recent activity, and read-only knowledge/memory overview |
+| **Tasks** | Create, edit, complete, reopen, two-step delete, search, sort, status filter, inline expand, and a detail drawer |
+| **Focus timer** | Timestamp-based countdown (not a drifting `setInterval`), pause/resume, short and long breaks, task binding, explicit “finish and record” settlement, retry when a write fails, and idempotent accounting across refreshes and multiple tabs |
+| **Session capture** | Mounted once at the workspace root; consumes DSH session events and counts **sessions only** — it never adds to focus minutes |
+| **History** | 30 / 90 / 365-day heatmap with five intensity levels (same component and same aggregation as the dashboard), active days, per-day timeline, streak |
+| **Backup / restore** | Export full / last 7 days / current month, import with preview, merge or overwrite, transactional rollback, real storage probe, two-step clear |
+| **Settings** | Data overview, session-capture toggle, storage status, export, import, danger zone, capability boundaries |
 
-| 深色主题 | 任务页 |
-| --- | --- |
-| ![Dark](https://raw.githubusercontent.com/SorenLorn/dsh-otaku-study-board/main/assets/screenshots/dashboard-dark-1440.jpg) | ![Tasks](https://raw.githubusercontent.com/SorenLorn/dsh-otaku-study-board/main/assets/screenshots/tasks-1440.jpg) |
+### What “crash-safe settlement” means
 
-> 截图来自独立 Chromium（真实组件 + 真实样式，1440px），里面的数字是演示数据。
+Finishing a focus round writes four entities — the log, the daily aggregate, the task totals and the
+timeline event — inside **one** transaction. If the transaction fails, the round is kept in a
+pending state with a persisted baseline; the plugin then verifies all four entities before deciding
+whether it may repair, retry, or refuse to touch anything.
 
-## 4. 技术栈
+The UI has three distinct outcomes and never claims more than it knows:
 
-React 18（函数组件 + hooks）· TypeScript 5.6（`strict`）· esbuild 0.25（两个产物，无打包器配置
-文件）· cordis（DSH 插件运行时）· 手写设计系统（`.v4-*` CSS 命名空间，约 4.9k 行）·
-测试：jsdom + @testing-library/react + 独立 Chromium（CDP），**无 jest / vitest**。
+- **Saved** — all four entities verified.
+- **Not saved** (red) — the write failed, the round is kept and can be retried.
+- **Discarded** (neutral) — only shown after a discard was *proven* safe to perform.
 
-## 5. 目录结构
+Discarding is deliberately refused when the daily aggregate or the task totals have already been
+counted for the round, because those two structures carry no round id — subtracting would guess and
+could delete someone else's numbers. See [`KNOWN-LIMITATIONS.md`](./KNOWN-LIMITATIONS.md).
 
-```
-src/
-  index.ts                    # 宿主半（Node ESM，刻意 no-op）
-  client/
-    index.tsx                 # 客户端入口：注册左侧导航 + main 面板，注入样式
-    v4/                       # 唯一用户工作台
-      Shell.tsx               # 顶栏：品牌 / 页面 / 项目作用域 / 日期 / 新建 / 数据 / 迁移计划
-      Dashboard.tsx Tasks.tsx History.tsx Settings.tsx
-      FocusPanel.tsx          # 专注卡（计时 + 绑定 + 未保存恢复）
-      Heatmap.tsx             # 学习活动热力图（Dashboard 与 History 共用）
-      CaptureBridge.tsx       # 采集的唯一挂载点（根节点）
-      Detail.tsx DetailContent.tsx Expandable.tsx workspace.tsx
-      TaskComposer.tsx useDataTransfer.ts ui.tsx
-    hooks/                    # useLocalStore / useBoardData / useBoardActions / useTimer …
-    lib/
-      settlement.ts           # 专注结算事务 + 四实体校验 + 修复（最需要小心的一块）
-      tx.ts                   # 通用写事务（先序列化 → 逐写 → 失败逆序回滚）
-      focus.ts                # 纯状态机（时间作参数，无 React）
-      daily.ts activity.ts heatmap.ts stats.ts history.ts backup.ts schema.ts
-      repo/                   # V4 实体的仓储端口（persistent / memory / blocked 三态）
-    style/board.css           # 全部样式，构建时内联进 bundle
-    board/ charts/ ui/        # V3 组件（保留、不参与渲染，见 §8）
-scripts/
-  build.mjs                   # 产物：lib/index.js + lib/client.js
-  register-check.mjs          # 13 项注册/样式/slot 检查
-  smoke.ts                    # 415 项纯逻辑
-  ui/*.test.ts(x)|mjs         # 22 个测试套件（jsdom / 纯逻辑 / Chromium）
-assets/screenshots/           # 市场与 README 用的截图
-reports/                      # 截图与度量的输出目录（内容不进仓库）
-docs/                         # 插件市场收录条目模板
-```
+## 📦 Installation
 
-## 6. 安装（作为 DSH 插件）
-
-**从仓库安装（推荐）**
+### From GitHub (works today)
 
 ```bash
 dsh plugin --profile desktop add github:SorenLorn/dsh-otaku-study-board
 ```
 
-`lib/` 随仓库提供，不需要在本地构建；装完重载窗口，左侧导航出现 **溯时学习工作台**。
-（尚未发布到 npm，所以没有 `dsh plugin add dsh-otaku-study-board` 这种短写法。）
+`lib/index.js` and `lib/client.js` are committed, so nothing is built on your machine. Reload the
+DSH window afterwards and the panel appears in the left navigation as **溯时学习工作台**
+(clock icon, order 20).
 
-**从本地源码安装（开发者）**
+> `dsh plugin add dsh-otaku-study-board` (the short form) only works once the package is published
+> to npm. It is not published yet, so use the `github:` form above.
+
+### From a local clone (for development)
 
 ```bash
-# 1. 构建
+# 1. build
 npm install
 npm run build                      # → lib/index.js + lib/client.js
 
-# 2. 装进 profile（profile 名按你自己的来，桌面端通常是 desktop）
+# 2. register it in your profile (use your own profile name)
 dsh plugin --profile desktop add "file:/absolute/path/to/dsh-otaku-study-board"
 
-# 3. 重载 DSH 窗口
-dsh plugin --profile desktop list   # 应能看到 dsh-otaku-study-board
+# 3. reload the DSH window, then confirm
+dsh plugin --profile desktop list
 ```
 
-左侧导航栏会出现 **溯时学习工作台**（时钟图标，order 20，排在「插件」「自动化任务」之后），
-点击后主区切换为工作台页面。
+A symlink works too: if `node_modules/dsh-otaku-study-board` inside the profile points at your
+clone, re-running `npm run build` is enough — no reinstall needed.
 
-### 第一次使用（四步）
+## 🚀 Usage
 
-1. **跑一轮专注**：Dashboard → 专注卡 →「开始专注」（默认 25 分钟，展开设置可改 5–90 分钟）。
-   中途可暂停，结束后点「结束并记录」。
-2. **记一件事**：任务页 →「新建」→ 填标题 → 在列表里勾选完成。
-3. **看反馈**：首页「学习活动」热力图当天格子会变色；悬停看当天数字，点格子开当天详情。
-4. **备份一次**：顶部「数据」→ 导出 JSON。数据只在本机浏览器里，换浏览器 / 清缓存会丢。
+1. **Run one focus round** — Dashboard → focus card → “开始专注” (25 min by default; 10–90 min in the
+   expanded settings). Pause any time, then press “结束并记录”.
+2. **Record a task** — Tasks → “新建” → type a title → tick it in the list.
+3. **See the feedback** — today's cell in the dashboard heatmap changes colour; hover for the
+   day's numbers, click to open that day.
+4. **Back up once** — top bar → “数据” → Export JSON. The data lives only in this browser profile.
 
-每个按钮的完整说明见 [`USER-GUIDE.md`](./USER-GUIDE.md)。
+A worked example of what one session produces:
 
-> **路径注意（Windows）**：如果检出路径里含 `‑`（U+2011 非断字连字符，作者本机的历史目录名），
-> esbuild 的 postinstall 会通过 `cmd.exe` 校验二进制，默认代码页会把它弄乱，`npm install` 可能报
-> `Command failed: ...\esbuild.exe --version`。两种解法：把目录改成纯 ASCII（推荐，正常从
-> GitHub 克隆就是 `dsh-otaku-study-board`），或用 `npm install --ignore-scripts`
-> （预编译的 `@esbuild/win32-x64` 已在 `node_modules` 里，`npm run build` 照常可用）。
->
-> 安装目录可以是符号链接：桌面 profile 里 `node_modules/dsh-otaku-study-board` 指向本仓库时，
-> 改完源码跑一次 `npm run build` 即可，重载窗口生效，不需要重新安装。
+```
+09:30  start a 25-minute focus round, bound to task "Chapter 3 exercises"
+09:55  finish → 1 focus log (25 min) + daily aggregate +25 + task +25 min / +1 pomodoro
+09:56  tick the task → status completed, completedAt recorded
+       dashboard: focus 25m · tasks 1 · heatmap score = 25 + 25×1 = 50 → level 2
+```
 
-## 7. 开发与构建
+Every button is documented in [`USER-GUIDE.md`](./USER-GUIDE.md).
+
+## ⚙️ Configuration
+
+There is **no config file** — the host half is intentionally a no-op and the plugin registers itself
+from the client bundle. All runtime options live in the **Settings (数据)** page and are persisted in
+`localStorage`:
+
+| Option | Default | Notes |
+| --- | --- | --- |
+| Focus duration | 25 min | 10–90 min, per round |
+| Short break | 5 min | 1–30 min |
+| Long break | 15 min | 1–30 min |
+| Rounds before a long break | 4 | drives the cycle indicator |
+| Session capture | on | counts DSH sessions; off stops new captures |
+| Active project scope | all projects | archived projects are excluded either way |
+
+Data is stored under 14 keys prefixed `dsh-otaku-study-board:`, each wrapped in
+`{ schemaVersion: 4, data }`. The `timer` key is transient and `aiRuns` is an audit key — neither is
+included in backups. Older V1/V2/V3 data is read in place and upgraded on read without writing back.
+
+## 🖼️ Screenshots
+
+| Dashboard (light) | Focus timer |
+| --- | --- |
+| ![Dashboard](assets/screenshots/dashboard-light-1440.jpg) | ![Focus](assets/screenshots/focus-1440.jpg) |
+
+| Dashboard (dark) | Tasks |
+| --- | --- |
+| ![Dark](assets/screenshots/dashboard-dark-1440.jpg) | ![Tasks](assets/screenshots/tasks-1440.jpg) |
+
+Captured from a standalone Chromium at 1440 px with real components and the real stylesheet; the
+numbers are demo data. The plugin market reads [`screenshots.json`](./screenshots.json) for the same
+images — see [`assets/README.md`](./assets/README.md) for how to add or replace them.
+
+## 🛠️ Development
 
 ```bash
-npm run typecheck     # tsc --noEmit（必须 0 错误）
-npm run build         # 两个产物；client.js 约 530 KB
-npm run clean         # 删掉 lib/
+npm run typecheck     # tsc --noEmit — must be 0 errors
+npm run build         # writes lib/index.js + lib/client.js
+npm run clean         # removes lib/
 ```
 
-测试全部用脚本跑，没有测试框架。命令与环境变量见 [`TESTING.md`](./TESTING.md)；
-最常用的一条：
+Stack: React 18 function components + hooks, TypeScript 5.6 (`strict`), esbuild 0.25 producing two
+artifacts with no bundler config file, cordis as the DSH plugin runtime, and a hand-written
+`.v4-*` CSS namespace. Tests are plain scripts (no jest / vitest) — jsdom for component tests and a
+standalone Chromium over CDP for browser tests. The most-used single command:
 
 ```bash
 npx esbuild scripts/smoke.ts --bundle --platform=node --format=cjs --outfile=smoke.cjs && node smoke.cjs
 ```
 
-关于设计约束（后端能力、宿主 API 实测结论、结算事务为什么长这样），先读
-[`ARCHITECTURE.md`](./ARCHITECTURE.md) —— 尤其是 `lib/settlement.ts` 开头那段注释。
+Full commands, suite list and uncovered areas are in [`TESTING.md`](./TESTING.md). Design
+constraints — host API findings, why the settlement transaction looks the way it does, storage
+semantics — are in [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
-## 8. 关于 V3 代码与旧数据
+## 🗑️ Uninstall
 
-- `src/client/board/`、`src/client/charts/`、`src/client/ui/ConfirmDialog.tsx` 以及
-  `hooks/useProject|useContextStats|useFrictionLog|useSlashCommand`、`lib/commands|context|snapshot|subtask`
-  **不在客户端 bundle 里**（用 esbuild metafile 实测，60/88 个源文件进 bundle）。
-- 它们保留的原因：**旧数据兼容与后续迁移的参考实现**，不是死代码可随手删。删除前必须确认
-  14 个存储键的读写兼容不受影响。
-- 旧数据读取：`lib/schema.ts` 的 `unwrapEnvelope` 接受 V1（裸数组）、V2、V3（信封）与 V4，
-  读时补齐字段、打开页面不写回。
+```bash
+dsh plugin --profile desktop remove dsh-otaku-study-board
+```
 
-## 9. 本地数据
+If the profile's `package.json` still lists `dsh-otaku-study-board` under `dsh.profile.bundles`,
+delete that line too — otherwise the loader keeps looking for a package that is gone.
 
-- 14 个 `localStorage` 键，前缀 `dsh-otaku-study-board:`，写入信封 `{ schemaVersion: 4, data }`。
-- `timer` 是瞬态键（不进备份）；`aiRuns` 是审计键（不进备份、不参与统计）。
-- 换浏览器 / 清缓存 = 数据消失。定期用「数据 → 导出」保存 JSON。
+Reload the window; the left-nav entry disappears. Your data is **not** deleted by uninstalling —
+remove it from the browser profile if you want a clean slate:
 
-## 10. 已知限制
+```js
+// DevTools console of the DSH window
+Object.keys(localStorage)
+  .filter(k => k.startsWith('dsh-otaku-study-board:'))
+  .forEach(k => localStorage.removeItem(k))
+```
 
-完整清单见 [`KNOWN-LIMITATIONS.md`](./KNOWN-LIMITATIONS.md)。最短版本四条：
+## 🤝 Contributing
 
-- **多标签页跨轮次并发写入会丢一笔**：本地存储没有锁，也没有 CAS。
-- **日聚合没有项目维度**：历史与热力图始终是全部项目。
-- **部分能力只读**：子任务、项目结构、知识节点、记忆的写入口尚未迁移（界面里明确标注）。
-- **真实 DSH 宿主内的人工验收尚未完成**：宿主不开放调试端口，本仓库只做到独立浏览器验证。
+Issues and pull requests are welcome. Before opening a PR:
 
-## 11. License
+- `npm run typecheck` and the test command above must pass.
+- Keep the “never claim more than we know” rule: a failed write is reported as failed, an undecided
+  state is reported as undecided, and no button may exist that does nothing.
+- Business logic changes should come with a test; documentation-only changes do not need one.
 
-MIT
+See [`TESTING.md`](./TESTING.md) for how each suite is run and [`ARCHITECTURE.md`](./ARCHITECTURE.md)
+for the invariants that must not be broken (settlement transaction, discard boundaries, heatmap
+aggregation, focus state machine).
+
+## 📄 License
+
+MIT — see [`LICENSE`](./LICENSE).
+
+## Further reading
+
+| Document | Contents |
+| --- | --- |
+| [`USER-GUIDE.md`](./USER-GUIDE.md) | Every button, step by step, plus FAQ |
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Current modules, data flow, consistency constraints |
+| [`KNOWN-LIMITATIONS.md`](./KNOWN-LIMITATIONS.md) | Real limits and what is not implemented yet |
+| [`TESTING.md`](./TESTING.md) | How to run the tests and what they cover |

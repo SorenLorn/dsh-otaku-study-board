@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Sorchron Study Board">
+  <title>Sorchron Study Board</title>
+  <!--
+    Design source for the plugin-market tile.
+
+    The market needs a SQUARE RASTER PNG (180x180 or 512x512), so export this
+    file before submitting the awesome-dsh-plugin entry:
+
+      assets/icon-512.png   (storefront tile / high-DPI)
+      assets/icon-180.png   (fallback tile)
+
+    The gradient and glyph match the in-app palette: --v4-violet #8a76b8 and
+    --v4-rose #b0768a on the dark surface #15131a.
+  -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8a76b8"/>
+      <stop offset="0.55" stop-color="#9d739f"/>
+      <stop offset="1" stop-color="#b0768a"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.28"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.04"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.10"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#sheen)"/>
+
+  <!-- clock ring -->
+  <circle cx="256" cy="256" r="132" fill="none" stroke="#ffffff" stroke-width="26" stroke-opacity="0.95"/>
+
+  <!-- hour hand (12) and minute hand (pointing to 4 o'clock) -->
+  <g stroke="#ffffff" stroke-width="26" stroke-linecap="round" fill="none">
+    <line x1="256" y1="256" x2="256" y2="168"/>
+    <line x1="256" y1="256" x2="322" y2="298"/>
+  </g>
+
+  <!-- center pin -->
+  <circle cx="256" cy="256" r="20" fill="#ffffff"/>
+</svg>

@@ -4,7 +4,7 @@
   "displayNameZh": "溯时学习工作台",
   "version": "4.0.0-rc.1",
   "description": "Sorchron Study Board (溯时学习工作台) V4 - a local-first study workbench for DSH: one unified workspace with dashboard, tasks, pomodoro focus timer with crash-safe settlement, Harness session capture, activity heatmap history and JSON backup/restore. All data stays on your device.",
-  "author": "dsh-otaku-study-board contributors",
+  "author": "SorenLorn <swh9094@gmail.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -26,6 +26,7 @@
     "lib/client.js",
     "cordis.patch.yml",
     "README.md",
+    "README.zh.md",
     "USER-GUIDE.md",
     "ARCHITECTURE.md",
     "KNOWN-LIMITATIONS.md",
@@ -34,7 +35,7 @@
   ],
   "engines": {
     "node": ">=20",
-    "dsh": ">=0.2.0-rc.2 || >=0.2.1-rc.2"
+    "dsh": ">=0.1.1-rc.1 <0.2.0-0 || >=0.2.0-rc.1 <0.3.0-0 || >=0.2.1-rc.1 <0.3.0-0"
   },
   "scripts": {
     "build": "node scripts/build.mjs",

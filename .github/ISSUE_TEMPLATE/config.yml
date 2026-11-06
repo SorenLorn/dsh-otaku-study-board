@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Read the known limitations first
+    url: https://github.com/SorenLorn/dsh-otaku-study-board/blob/main/KNOWN-LIMITATIONS.md
+    about: Unimplemented features and deliberate boundaries are listed here. Please check before filing.
+  - name: Usage questions
+    url: https://github.com/SorenLorn/dsh-otaku-study-board/blob/main/USER-GUIDE.md
+    about: Every button is documented, including what each failure message means.

@@ -9,9 +9,11 @@
 # config in V1 — the left-nav entry and the page it opens are registered purely
 # from the client bundle (src/client/index.tsx).
 #
-# `id` is the plugin-tree identity (must be unique in a profile).
+# `id` is the plugin-tree identity (must be unique in a profile). It is kept
+# identical to the package name so a profile that pins `dsh-otaku-study-board`
+# in `dsh.profile.bundles` finds exactly one tree node for it.
 # `name` is the npm package name the loader imports — it is the install
 # identity and intentionally NOT renamed to the display name (see README).
 - insert:
-    - id: otaku-study-board
+    - id: dsh-otaku-study-board
       name: dsh-otaku-study-board

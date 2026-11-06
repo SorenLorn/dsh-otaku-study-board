@@ -1,0 +1,95 @@
+name: Bug report
+description: Something in the panel does not behave the way the docs say it should.
+title: "[bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this.
+
+        Please do **not** paste real study records or a full `localStorage` dump.
+        If the report involves your data, describe its shape instead.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you click, and what did the panel do?
+      placeholder: The focus card said "Not saved" after I pressed Finish and record.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      placeholder: The round should have been recorded, or a retry button should appear.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the panel from the left navigation
+        2. Start a 25 minute round bound to a task
+        3. Reload the window mid-round
+        4. Press Finish and record
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the panel
+      options:
+        - Dashboard
+        - Tasks
+        - Focus timer
+        - History / heatmap
+        - Backup / import
+        - Settings
+        - Installation / not loading
+        - Something else
+    validations:
+      required: true
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      description: Shown in package.json, or the tag you installed from.
+      placeholder: 4.0.0-rc.1
+    validations:
+      required: true
+
+  - type: input
+    id: dsh-version
+    attributes:
+      label: DSH version
+      placeholder: output of `dsh --version`
+    validations:
+      required: true
+
+  - type: dropdown
+    id: theme
+    attributes:
+      label: Theme
+      options:
+        - Light
+        - Dark
+        - Both behave the same
+    validations:
+      required: false
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: Any error from the DevTools console, with the log prefix `SorchronBoard V3`.
+      render: text
+    validations:
+      required: false

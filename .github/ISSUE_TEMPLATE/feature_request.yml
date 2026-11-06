@@ -1,0 +1,55 @@
+name: Feature request
+description: Suggest a capability the workbench does not have yet.
+title: "[feature] "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, please check
+        [KNOWN-LIMITATIONS.md](https://github.com/SorenLorn/dsh-otaku-study-board/blob/main/KNOWN-LIMITATIONS.md)
+        — the feature may already be listed as planned or deliberately out of scope.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve
+      description: Describe the situation, not the implementation.
+      placeholder: I study in two projects and want the heatmap to show them separately.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like to see
+      description: One or two sentences are enough.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the panel
+      options:
+        - Dashboard
+        - Tasks
+        - Focus timer
+        - History / heatmap
+        - Backup / import
+        - Settings
+        - Cross-cutting
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Project constraints
+      description: The plugin is local-only by design; some requests conflict with that.
+      options:
+        - label: This does not require network access or an account.
+          required: false
+        - label: This does not require changing the stored data format in a breaking way.
+          required: false

@@ -1,0 +1,31 @@
+# awesome-dsh-plugin 投稿条目 / entry for the awesome-dsh-plugin list
+#
+# 用法 / usage:
+#   1. fork 列表仓库 / fork the list repository
+#   2. 把本文件复制到 data/plugins/SorenLorn__dsh-otaku-study-board.yml
+#      copy this file to data/plugins/SorenLorn__dsh-otaku-study-board.yml
+#   3. 一个 PR 只加这一个文件；两个 README 由对方脚本生成，不要手工改
+#      one file per PR — the READMEs are generated, never edit them by hand
+#
+# 投稿前确认 / before opening the PR:
+#   - 仓库已加 `dsh-plugin` topic / the repo carries the `dsh-plugin` topic
+#   - 仓库创建已满 1 天（CI 会校验）/ the repo is at least 1 day old
+#   - package.json 含 dsh.bundle.patch，且根目录有 cordis.patch.yml
+#
+# 格式规则 / format rules:
+#   - url 必须与仓库地址完全一致 / must match the repo exactly
+#   - description.en 是唯一必填字段；含 `: `（冒号加空格）时必须加引号
+#     description.en is the only required field; quote it when it contains ': '
+
+url: https://github.com/SorenLorn/dsh-otaku-study-board
+name: SorenLorn/dsh-otaku-study-board
+category: ui
+
+description:
+  en: A local-first study workbench for DSH with a dashboard, tasks, a pomodoro focus timer with crash-safe settlement, session capture, a 365-day activity heatmap and JSON backup.
+  zh: DSH 的本地学习工作台：仪表盘、任务、带崩溃安全结算的番茄钟、会话采集、365 天学习热力图与 JSON 备份。
+
+# 市场卡片图标 / storefront tile — GitHub-hosted square raster image.
+# 先按 assets/README.md 把 assets/icon.svg 导出成 512×512 PNG 并提交，再取消下面这行注释：
+# Export assets/icon.svg to a 512x512 PNG, commit it, then uncomment the next line:
+# icon: https://raw.githubusercontent.com/SorenLorn/dsh-otaku-study-board/main/assets/icon-512.png
