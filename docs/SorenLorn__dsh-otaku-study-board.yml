@@ -26,6 +26,6 @@ description:
   zh: DSH 的本地学习工作台：仪表盘、任务、带崩溃安全结算的番茄钟、会话采集、365 天学习热力图与 JSON 备份。
 
 # 市场卡片图标 / storefront tile — GitHub-hosted square raster image.
-# 先按 assets/README.md 把 assets/icon.svg 导出成 512×512 PNG 并提交，再取消下面这行注释：
-# Export assets/icon.svg to a 512x512 PNG, commit it, then uncomment the next line:
-# icon: https://raw.githubusercontent.com/SorenLorn/dsh-otaku-study-board/main/assets/icon-512.png
+# assets/icon-512.png 由 assets/icon.svg 渲染而来，已在仓库中；改图标时两者一起更新。
+# assets/icon-512.png is rendered from assets/icon.svg and committed; update both together.
+icon: https://raw.githubusercontent.com/SorenLorn/dsh-otaku-study-board/main/assets/icon-512.png

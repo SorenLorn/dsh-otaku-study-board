@@ -583,7 +583,7 @@ export function Settings() {
           <div className="v4-data-danger">
             <p className="v4-data-danger-title">确认清空本机全部数据？</p>
             <p className="v4-data-danger-body">
-              将删除：任务、日志、项目、阻碍、设置、计时状态、记忆、知识、复习、时间轴、历史快照、日聚合、AI 审计。
+              将删除：任务、日志、项目、阻碍、设置、计时状态、记忆、知识、复习、时间轴、历史快照、日聚合、调用审计。
               此操作不可撤销。
             </p>
             <label className="v4-data-ack">

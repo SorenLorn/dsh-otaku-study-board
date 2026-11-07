@@ -9,7 +9,7 @@
  *   memory   项目记忆（活文档）      knowledge  知识图谱（nodes + edges）
  *   reviews  复习记录与排期          timeline   时间轴事件（append-only）
  *   history  历史快照（真实取样）    daily      日聚合（热力图数据源）
- *   aiRuns   AI 调用审计（不进备份）
+ *   aiRuns   调用审计（不进备份）
  */
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ export interface ProjectMemory {
   source: 'manual' | 'draft' | 'ai'
 }
 
-/** 记忆草稿：AI 或「从日志生成」的产物，**必须用户确认后才写主文档**。 */
+/** 记忆草稿：外部生成或从日志推导的产物，**必须用户确认后才写主文档**。 */
 export interface MemoryDraft {
   projectId: string
   at: number
@@ -77,7 +77,7 @@ export interface KnowledgeNode {
   taskIds: string[]
   logIds: string[]
   frictionIds: string[]
-  /** `ai` 表示由 AI 建议产生，可一键过滤。 */
+  /** `ai` 表示由外部建议产生，可一键过滤。 */
   origin: 'manual' | 'ai'
   createdAt: number
   updatedAt: number
@@ -265,7 +265,7 @@ export interface HeatmapSummary {
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
- * 7. AI 调用审计（需求 2.2）
+ * 7. 调用审计（需求 2.2）
  * ──────────────────────────────────────────────────────────────────────────── */
 
 export type AiRunKind = 'daily' | 'weekly' | 'project' | 'memory' | 'knowledge'
@@ -293,14 +293,14 @@ export interface AiRun {
   fallbackUsed: boolean
 }
 
-/** AI 返回的诊断结构（本地降级也产出同样形状，UI 只认这一种）。 */
+/** 外部返回的诊断结构（本地降级也产出同样形状，UI 只认这一种）。 */
 export interface CoachReport {
   kind: 'daily' | 'weekly'
   /** 生成时间。 */
   at: number
   /** `local` 表示规则分析，UI 必须显示这个来源。 */
   provider: 'local' | 'ai'
-  /** 客观数据区（永远由本地计算，AI 不许改）。 */
+  /** 客观数据区（始终由本地计算，外部结果不得改写）。 */
   facts: {
     focusMinutes: number
     tasksDone: number
@@ -309,7 +309,7 @@ export interface CoachReport {
     projects: Array<{ name: string; minutes: number }>
     overdue: number
   }
-  /** 主观推断区（AI 或规则）：必须与 facts 分开渲染。 */
+  /** 主观推断区（外部结果或规则）：必须与 facts 分开渲染。 */
   insights: {
     headline: string
     achievements: string[]

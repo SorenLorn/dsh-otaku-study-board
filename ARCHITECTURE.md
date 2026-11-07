@@ -1,9 +1,9 @@
 # 架构说明 · Sorchron Study Board
 
-写给接手这个仓库的人。目标：十分钟内知道「数据从哪来、写到哪去、哪一块不能随便动」。
+本文档面向维护者，说明数据来源、写入路径与不可变更的约束，阅读时间约十分钟。
 
-> 适用范围：`4.0.0-rc.1`。本文件只描述**当前代码**。所有踩过的坑与不可动摇的约束都写在下面，
-> 不再另存历史阶段报告 —— 想追旧决策请查 git 历史，想改代码只读这一份。
+> 适用范围：`4.0.0-rc.1`。本文件只描述**当前代码**及其必须遵守的约束。历史决策请查阅 git 提交记录，
+> 本仓库不保存阶段报告。
 
 ---
 
@@ -28,10 +28,10 @@ package.json  ──dsh.bundle.patch──▶  cordis.patch.yml ──▶ profil
   2. 注册左侧导航行与它打开的页面；
   3. 把 `BoardPage` 作为组件交出去。
 
-### 左导航是怎么注册的（别再重复探）
+### 左导航注册方式
 
-宿主**没有** `ctx.slots.sidebarGuide`（本机 profile 的 node_modules 里 grep 不到该标识符）。
-现行可用写法与 `dsh-context` 完全一致，两条 slot 用同一个 id 对齐：
+宿主未提供 `ctx.slots.sidebarGuide`（在 profile 的 `node_modules` 中检索不到该标识符）。
+当前可用写法与 `dsh-context` 一致，两条 slot 使用同一个 id 对齐：
 
 ```ts
 ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: PANEL_ID }, Page))
@@ -55,7 +55,7 @@ ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({ name: 'sidebar.
 | `tasks` `logs` `projects` `settings` `friction` `meta` | V3 起的核心实体 | ✅ |
 | `daily` `timeline` `memory` `knowledge` `reviews` `history` | V4 新增 | ✅ |
 | `timer` | 计时器瞬态状态（含 `pendingResult`） | ❌ 不进备份 |
-| `aiRuns` | AI 调用审计 | ❌ 不进备份、不参与统计 |
+| `aiRuns` | 外部调用审计记录 | ❌ 不进备份、不参与统计 |
 
 读时补齐、**打开页面不写回**（`useLocalStore` 里的 `touchedRef`）：老数据只有真正被修改时才升版。
 
@@ -67,7 +67,7 @@ ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({ name: 'sidebar.
 | `lib/repo`（`getRepo()`） | `memory` / `knowledge` / `reviews` / `timeline` / `history` / `daily` / `aiRuns` 的整表读写 | 非 React 的仓储端口，供 `useBackup` / `useDataTransfer` 直接读快照 |
 
 `repo` 的存储可用性是**三态**：`persistent`（正常）/ `memory`（没有 window，测试用）/ `blocked`
-（浏览器禁用存储）。`blocked` 时写入必须返回 `false`，不能谎报成功。
+（浏览器禁用存储）。`blocked` 时写入必须返回 `false`，不得返回成功。
 
 ### 2.3 写事务：`lib/tx.ts`
 
@@ -77,7 +77,7 @@ writeTransaction(store, [{ key, value }, ...])
 // 再逐写；任一失败 → 逆序回滚已写的键 → 返回 { ok, failedKey, restored, written }
 ```
 
-`restored === false` 表示**回滚也失败了**，数据可能不一致 —— 上层必须如实告诉用户，不能当成功。
+`restored === false` 表示**回滚同样失败**，数据可能不一致；上层必须按失败处理并告知用户。
 这是全项目唯一的事务原语，导入、清空、结算都走它。
 
 ### 2.4 版本与兼容：`lib/schema.ts`
@@ -89,8 +89,8 @@ writeTransaction(store, [{ key, value }, ...])
 ### 2.5 备份与导入（`lib/backup.ts` / `hooks/useBackup.ts` / `v4/useDataTransfer.ts`）
 
 - **导出恒写 12 个实体字段**（`BACKUP_KEYS`：tasks / logs / projects / settings / friction / meta /
-  memory / knowledge / reviews / timeline / history / daily），缺省也写空值。这条不能改成
-  「调用方传了才写」—— 漏传一个键就是静默丢一份数据。
+  memory / knowledge / reviews / timeline / history / daily），缺省也写空值。不得改为
+  「调用方传了才写」—— 漏传一个键会静默丢失一份数据。
 - **导入是一条固定流水线**：大小预挡（>16 MB 直接拒绝）→ `parseBackup`（JSON / kind / 必填键 /
   条数上限；坏记录逐条丢弃并**回报丢弃条数**）→ `previewImport`（只读，不写库）→
   用户确认「合并 / 覆盖」→ `applyImport` → 快照裁剪 → **一次 `writeTransaction` 写 12 个键**。
@@ -138,10 +138,10 @@ BoardPage（src/client/index.tsx）
 
 ### 为什么浮层不放在卡片里
 
-`position: fixed` 的浮层如果渲染在卡片内部，会被 `backdrop-filter` 建立的包含块「关」进卡片，
-表现为浮层被裁切、hover 时边缘抖动。所以浮层统一挂到页面根的 `.v4-overlays`，
-卡片内只做「展开」（`ExpandablePanel`），不做浮层。卡片 hover 只改 border/shadow/background，
-**禁止 transform 位移**（同上原因）。
+`position: fixed` 的浮层若渲染在卡片内部，会受 `backdrop-filter` 建立的包含块约束，
+表现为裁切与 hover 时边缘抖动。因此浮层统一挂到页面根的 `.v4-overlays`，
+卡片内只做「展开」（`ExpandablePanel`）。卡片 hover 只修改 border / shadow / background，
+**不使用 transform 位移**（原因同上）。
 
 ---
 
@@ -178,13 +178,13 @@ BoardPage（src/client/index.tsx）
 
 ---
 
-## 6. 结算事务与恢复（`lib/settlement.ts`）—— 最需要小心的文件
+## 6. 结算事务与恢复（`lib/settlement.ts`）
 
 ### 6.1 为什么不能用四个 setter
 
 `useLocalStore.update` 是「动作发生即写盘」。四个 setter = 四次独立写盘，任一次失败就留下部分写入。
-实测：`daily` 失败时日志与任务已经加上了；`logs` 失败时 daily/任务/时间轴已经加上了。而 `roundId`
-在 `endRound` 已清空，失败后拼不回同一笔，也没有重试入口。所以改成 `settleFocus` 一次事务写 4 键。
+实测结果：`daily` 失败时日志与任务已写入；`logs` 失败时 daily / 任务 / 时间轴已写入。
+`roundId` 在 `endRound` 已清空，失败后无法还原同一笔，也没有重试入口。因此改为 `settleFocus` 一次事务写 4 键。
 
 ### 6.2 判据：四个实体投票，不是「日志在不在」
 
@@ -215,9 +215,9 @@ settleFocus(input)
 基线 `SettlementBaseline { day, dailyMinutes, taskId, taskMinutes, taskPomodoros }` 在写入前快照，
 失败时存进 `pendingResult.before`（`useTimer.keepBaseline` 只写一次，绝不覆盖成失败后的值）。
 
-> **踩过的坑**：`planRepair` 曾写成 `input.baseline ?? snapshotBaseline(fresh)`。没有持久化基线时，
-> 它把「失败后的当前值」当成基线，于是 `current >= before + minutes` 恒成立 → 永远判「已算过」→
-> 修复空转却报成功。现在**只用 `input.baseline`**，没有就不修。
+> **注意**：`planRepair` 不得写成 `input.baseline ?? snapshotBaseline(fresh)`。缺少持久化基线时，
+> 「失败后的当前值」会被当作基线，`current >= before + minutes` 恒成立，从而始终判定「已应用」，
+> 修复实际未生效却返回成功。实现**只使用 `input.baseline`**，缺失时不执行修复。
 
 ### 6.4 `pendingResult` 生命周期
 
@@ -235,8 +235,8 @@ settleFocus(input)
 
 ### 6.6 能保证 / 不能保证
 
-**能**：单标签内 4 键全写或全不写；同 round 幂等（重试 / 刷新 / 多标签恢复都不翻倍）；
-部分写入可按基线精确补齐；失败绝不谎报成功。
+**能**：单标签内 4 键全写或全不写；同 round 幂等（重试、刷新、多标签恢复均不重复累计）；
+部分写入可按基线精确补齐；失败时不返回成功。
 
 **不能**：localStorage 无锁无 CAS，跨不同 round 的并发写入会后写覆盖先写且**无法检测**；
 基线丢失且数据被第三方改动时只能报「无法确定」，由人决定。
@@ -259,13 +259,13 @@ timeline = state.timeline.filter(e => !(e.type === 'focus.completed' && e.refId 
 
 **「日志没了」不等于「可以放行」**：事务顺序是 logs → tasks → daily → timeline，回滚失败会留下
 「日志已回滚、Daily 却加上了」。所以即使本轮在日志和事件里都找不到痕迹，`daily` / `task` 的
-基线校验也照常跑 —— 否则那 18 分钟会永久留在日聚合里，没有任何日志支撑。
+基线校验也照常跑 —— 否则本轮分钟数会永久留在日聚合中，且没有对应日志。
 
 **执行**：删除与「清 `pendingResult`」在**同一个事务**里；只写真的变了的键；写后回读校验，
 校验不过就把标记**写回原值**，绝不留「标记没了、数据还在」。
 
-**刻意拒绝的一类**：日聚合或任务**已经累计**时一律不给放弃 —— 这两个实体里没有 roundId，
-扣减只能猜，猜错扣的是别人的有效记录。出口是「重试写入」。
+**刻意拒绝的一类**：日聚合或任务**已经累计**时一律不允许放弃 —— 这两个实体不含 roundId，
+扣减量无法推断，可能删除其它记录的有效数据。出口是「重试写入」。
 （结构与取舍见 `KNOWN-LIMITATIONS.md` A2；界面三态：`已记入` / `未保存` / `已放弃`，
 刷新后由「存储里有没有 `at === 本轮 endedAt` 的 focus 日志」推导，不靠内存状态。）
 
@@ -285,22 +285,21 @@ window 桥 ─┘        │ 防抖 + 内容哈希去重
              useBoardActions.addSessionLog → daily.sessions + 1（不进 focusMinutes）
 ```
 
-三条纪律：**只有一个挂载点**（多挂会互相踢掉，表现为时好时坏）；**不新增采集范围**（复用
-`lib/detect`）；**不污染专注**。斜杠命令 `/board-*` 只从日志里摘掉，不执行。
+三条约束：**只有一个挂载点**（重复挂载会相互注销，表现为时好时坏）；**不扩大采集范围**（复用
+`lib/detect`）；**不影响专注统计**。斜杠命令 `/board-*` 只从日志里摘掉，不执行。
 
 ---
 
 ## 8. History 聚合与统计口径
 
 - 热力图 / 活跃分都用 `lib/activity.ts`：`score = focusMinutes + tasksDone × 25`，
-  色阶阈值 `[1, 25, 60, 120]`（0 分永远是空档）。这五个档是**产品规则**，不是科学标准，
-  不要为某一处显示另算一套。
+  色阶阈值 `[1, 25, 60, 120]`（0 分恒为空档）。五档阈值为固定产品规则，各页面必须复用同一实现。
 - **去重优先级**：`daily` 聚合优先，`logs` 只作补充，取 `max(daily, logs)`；日志按 `id` 去重；
-  `timeline` 只用于明细展示，**永不参与计数**（否则一次专注会被算三遍）。
+  `timeline` 只用于明细展示，**不参与计数**（否则同一轮专注会被重复计数）。
 - **专注次数 `focusCount`**：有效 focus 日志条数。只剩 `daily` 聚合的老日子（日志已超出 400 条
   上限被裁）按下限记 **1 次** —— 是下限，不编造具体条数。
 - **连续天数**：活跃 = `score > 0`。最长连续取窗口内最大连跑；当前连续在今天没活动时**从昨天起算**
-  （与 `stats.countStreak` 的产品规则一致，避免早上打开就显示 0）。两个指标都只在所选窗口内算，
+  （与 `stats.countStreak` 的产品规则一致，避免清晨打开时显示为 0）。两个指标都只在所选窗口内算，
   40 天连续在 30 天视图里显示 30。
 - 日期键一律走本地日键 `YYYY-MM-DD`（`lib/daily` / `lib/time`），**不要**用 `toISOString()` 切 UTC。
 - 历史页是只读视图：不写库、不触发 `applyDailyDelta`、不重构 daily。
@@ -339,7 +338,7 @@ window 桥 ─┘        │ 防抖 + 内容哈希去重
 
 - 宿主 API：`ctx.slots.*`、`ctx.effect`、`ctx.inject(['slots'])`、`connection.fetch.register` 可用；
   `ctx.get('llm')` 只有 provider 注册表、没有生成接口；`settings.describe()` 拿不到密钥；
-  没有 `commands.register`。所以任何「AI 能力」都得自带配置，不能借宿主密钥。
+  未提供 `commands.register`。因此需要外部调用的能力必须自带配置，无法复用宿主密钥。
 - 主题：宿主在 `body` 上打 `data-ds-dark-theme`，只能靠它判断深浅色。
 - 真实宿主内的验收（页面加载、采集通道、深浅色、抽屉层级）**尚未由本仓库自动化覆盖**，
   需要人工过一遍，清单见 `TESTING.md` 末尾与 `KNOWN-LIMITATIONS.md`。

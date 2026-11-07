@@ -221,7 +221,7 @@ export const BOARD_CONFIG = {
     queueLimit: 20,
   },
 
-  /** AI 分析 */
+  /** 分析档位 */
   ai: {
     /** 单次请求超时（毫秒）。 */
     timeoutMs: 15_000,

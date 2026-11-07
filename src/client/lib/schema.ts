@@ -584,7 +584,7 @@ export function restoreTimerState(value: unknown, now = Date.now()): TimerRestor
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
- * V4：记忆 / 知识 / 复习 / 时间轴 / 历史 / 日聚合 / AI 审计
+ * V4：记忆 / 知识 / 复习 / 时间轴 / 历史 / 日聚合 / 调用审计
  *
  * 统一原则与 V3 一致：缺字段给默认、类型错给默认、超界夹边界、单条坏数据只丢自己。
  * 新增实体全部是**独立键**，所以 V3 的 7 个键读写路径一行未改。
@@ -904,7 +904,7 @@ export function coerceDaily(value: unknown): DailyAggregate | undefined {
   }
 }
 
-/** AI 审计记录。 */
+/** 调用审计记录。 */
 export function coerceAiRun(value: unknown, now = Date.now()): AiRun | undefined {
   const record = asRecord(value)
   if (record === undefined) return undefined

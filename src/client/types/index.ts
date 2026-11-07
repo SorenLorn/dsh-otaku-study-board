@@ -237,7 +237,7 @@ export interface BoardSettings {
   /* ── V4 ── */
   /** 每天首次打开时自动生成今日诊断（只发统计档）。 */
   aiAutoDaily: boolean
-  /** AI 输入档位：统计 / 统计+摘要。 */
+  /** 外部输入档位：统计 / 统计+摘要。 */
   aiTier: 'stats' | 'summary'
   /** 热力图默认展示的年份；`0` 表示跟随当前年。 */
   heatmapYear: number

@@ -1,14 +1,13 @@
 # assets/
 
-Marketplace and documentation assets. Everything here is referenced either by the READMEs or by
-`screenshots.json`, and every path is a **repository-relative** path — no external image hosts,
-no CDN links.
+Marketplace and documentation assets. Every path in this directory is repository-relative; no
+external image hosts and no CDN links are used anywhere in the project.
 
 ```
 assets/
-  icon.svg                     design source for the market tile (not a raster)
-  icon-180.png                 TODO — export from icon.svg, square, 180×180
-  icon-512.png                 TODO — export from icon.svg, square, 512×512
+  icon.svg                     design source for the market tile
+  icon-512.png                 512×512 raster tile (referenced by the market entry)
+  icon-180.png                 180×180 fallback tile
   screenshots/
     dashboard-light-1440.jpg   dashboard, light theme
     dashboard-dark-1440.jpg    dashboard, dark theme
@@ -16,62 +15,52 @@ assets/
     tasks-1440.jpg             tasks page
 ```
 
-## Market tile icon
+## Market tile
 
-`dsh-market` shows a square tile in the plugin list. The requirements:
+`dsh-market` renders a square tile beside the plugin name. The requirements are:
 
-- **Raster, not SVG.** PNG is the safe choice. `icon.svg` is only the design source.
-- **Square.** 180×180 is enough; 512×512 covers high-DPI screens. Non-square images get cropped.
-- **Hosted in this repository.** The entry uses a `raw.githubusercontent.com` URL pointing at this
-  directory, so the file must be committed.
+- **Raster.** PNG is required; SVG is not supported. `icon.svg` is the design source only.
+- **Square.** 180×180 is the minimum; 512×512 covers high-DPI displays. Non-square images are cropped.
+- **Committed to this repository.** The entry references the file through a `raw.githubusercontent.com`
+  URL, so the asset must be in the repository, not in a release attachment.
 
-To produce the PNGs, open `icon.svg` in any vector editor or run:
+Both PNGs are rendered from `icon.svg` and committed. When the artwork changes, update the SVG and
+re-render both sizes:
 
 ```bash
-# ImageMagick
 magick -background none assets/icon.svg -resize 512x512 assets/icon-512.png
 magick -background none assets/icon.svg -resize 180x180 assets/icon-180.png
 
-# or Inkscape
+# or
 inkscape assets/icon.svg -w 512 -h 512 -o assets/icon-512.png
+inkscape assets/icon.svg -w 180 -h 180 -o assets/icon-180.png
 ```
 
-Until the PNGs exist, leave `icon:` commented out in
-[`docs/SorenLorn__dsh-otaku-study-board.yml`](../docs/SorenLorn__dsh-otaku-study-board.yml) — the
-market then falls back to the repository owner's avatar.
+The tile is already wired up in [`docs/SorenLorn__dsh-otaku-study-board.yml`](../docs/SorenLorn__dsh-otaku-study-board.yml).
 
 ## Screenshots
 
-Rules that keep the market view and the READMEs in sync:
+Conventions that keep the market view and the READMEs consistent:
 
-1. File names are `<page>-<theme-or-view>-<width>.jpg`, lowercase, no spaces.
-2. **At most 8 images.** More than 8 will be truncated by the market, so pick the best ones.
-3. Width **1440 px** matches the layout the tests assert against; keep it when re-shooting.
-4. Update **both** places after adding an image: the table in `README.md` / `README.zh.md`, and the
-   array in `screenshots.json`.
+1. File names follow `<page>-<theme-or-view>-<width>.jpg`, lowercase, no spaces.
+2. **Eight images maximum.** The market truncates anything beyond that, so keep only the strongest.
+3. Capture at **1440 px** width — the same viewport the browser tests assert against.
+4. Adding an image requires two updates: the table in `README.md` / `README.zh.md`, and the array in
+   `screenshots.json`.
 
-`screenshots.json` lives next to `package.json` and is a plain JSON array of relative paths. JSON has
-no comment syntax, so the format is documented here instead:
+`screenshots.json` sits next to `package.json` and is a plain JSON array of relative paths. JSON
+does not support comments, so the format is documented here:
 
 ```jsonc
 [
-  // relative to the repository root, always forward slashes
+  // repository-relative, always forward slashes
   "assets/screenshots/dashboard-light-1440.jpg",
   "assets/screenshots/dashboard-dark-1440.jpg",
   "assets/screenshots/focus-1440.jpg",
   "assets/screenshots/tasks-1440.jpg"
-  // 5..8 — add more entries here; order is the display order
+  // entries 5..8 — display order follows array order
 ]
 ```
 
-Drop a new file into `assets/screenshots/`, add its path to that array, and `dsh-market` picks it up
-on the next refresh. Nothing else needs to change.
-
-## 中文摘要
-
-- 图标：市场要**方形 PNG**（180×180 或 512×512），`icon.svg` 只是设计源文件，导出后放进本目录。
-  在 PNG 生成之前，投稿 yml 里的 `icon:` 保持注释状态，市场会回退到作者头像。
-- 截图：命名 `<页面>-<主题或视图>-<宽度>.jpg`，**最多 8 张**，宽度 1440。新增截图后要同时改
-  `README.md` / `README.zh.md` 的表格和 `screenshots.json` 的数组。
-- `screenshots.json` 是纯数组，JSON 不支持注释，所以格式说明写在本文件里。路径一律用仓库内相对
-  路径，不要用图床。
+Add the file under `assets/screenshots/`, append its path to the array, and the market picks it up on
+the next refresh. No other change is required.

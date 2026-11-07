@@ -6,7 +6,7 @@
  * 跨标签同步 + 写入广播」的仓储实现，跑了一年没出过问题。把 V3 的读写全改成
  * repo 只会制造大面积回归，收益是零。
  *
- * 所以 V4 的策略是**局部抽象**：新实体（记忆/知识/复习/时间轴/历史/日聚合/AI 审计）
+ * 所以 V4 的策略是**局部抽象**：新实体（记忆/知识/复习/时间轴/历史/日聚合/调用审计）
  * 从第一天就走接口，未来要换 IndexedDB 只需要换 `local.ts`，组件与 hooks 一行不动。
  */
 import type {
@@ -45,7 +45,7 @@ export interface BoardRepo {
   readDaily(): DailyAggregate[]
   writeDaily(list: DailyAggregate[]): boolean
 
-  /* AI 审计 */
+  /* 调用审计 */
   readAiRuns(): AiRun[]
   writeAiRuns(list: AiRun[]): boolean
 
