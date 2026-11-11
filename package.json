@@ -3,7 +3,7 @@
   "displayName": "Sorchron Study Board",
   "displayNameZh": "溯时学习工作台",
   "version": "4.0.0-rc.1",
-  "description": "Sorchron Study Board (溯时学习工作台) V4 - a local-first study workbench for DSH: one unified workspace with dashboard, tasks, pomodoro focus timer with crash-safe settlement, Harness session capture, activity heatmap history and JSON backup/restore. All data stays on your device.",
+  "description": "A local-first study workbench for DSH: dashboard, tasks, pomodoro focus timer with crash-safe settlement, session capture, 365-day activity heatmap and JSON backup. All data stays on your device.",
   "author": "SorenLorn <swh9094@gmail.com>",
   "license": "MIT",
   "repository": {
