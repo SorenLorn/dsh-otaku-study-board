@@ -76,7 +76,7 @@ import {
   memoryCompleteness,
   memoryOf,
   memoryToMarkdown,
-  memoryToPrompt,
+  memoryToContext,
   upsertMemory,
 } from '../src/client/lib/memory'
 import {
@@ -898,10 +898,10 @@ console.log('\n[17] 项目记忆与草稿确认')
   check('upsert 按 projectId 替换', list.length === 1 && memoryOf(list, 'p1')?.version === 2)
   check('查不到时返回 undefined', memoryOf(list, 'p9') === undefined)
 
-  const prompt = memoryToPrompt(merged, '插件开发')
-  check('提示词含项目名', prompt.includes('插件开发'))
-  check('提示词含已完成项', prompt.includes('重构 TaskList'))
-  check('提示词不含日志原文', !prompt.includes('TypeError'))
+  const context = memoryToContext(merged, '插件开发')
+  check('上下文含项目名', context.includes('插件开发'))
+  check('上下文含已完成项', context.includes('重构 TaskList'))
+  check('上下文不含日志原文', !context.includes('TypeError'))
   const markdown = memoryToMarkdown(merged, '插件开发')
   check('Markdown 含标题与版本', markdown.includes('# 插件开发') && markdown.includes('v2'), markdown.slice(0, 40))
   check('完成度在 0–1 之间', memoryCompleteness(merged) > 0 && memoryCompleteness(merged) <= 1, memoryCompleteness(merged))

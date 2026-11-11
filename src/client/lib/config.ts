@@ -197,8 +197,8 @@ export const BOARD_CONFIG = {
   memory: {
     /** 单字段条数上限（done / openIssues 等）。 */
     maxItems: 120,
-    /** 导出提示词时的字符上限，避免超过聊天框。 */
-    maxPromptChars: 12_000,
+    /** 导出上下文文本时的字符上限。 */
+    maxContextChars: 12_000,
   },
 
   /** 知识图谱 */

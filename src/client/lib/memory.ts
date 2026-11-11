@@ -4,7 +4,7 @@
  * ── 与「项目快照」的区别（别混）──────────────────────────────────────────
  *   快照（snapshot.ts） = 某个时刻的**导出物**：任务 + 阻碍 + 日志标题，用来搬家；
  *   记忆（本文件）       = 一份**活文档**：简介 / 技术栈 / 架构 / 进度 / 决策 / 下一步，
- *                          用于生成新会话提示词与历史对比。
+ *                          用于导出会话上下文文本与历史对比。
  *
  * ── 一条不可让步的规则 ────────────────────────────────────────────────────
  * 自动生成 / 日志推导得到的只能是**草稿**（`MemoryDraft`），必须用户逐条勾选后
@@ -286,7 +286,7 @@ export function acceptDraft(draft: MemoryDraft, acceptedOnly = true): MemoryDraf
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
- * 导出：Markdown 与「新会话提示词」
+ * 导出：Markdown 与「会话上下文文本」
  * ──────────────────────────────────────────────────────────────────────────── */
 
 function section(title: string, body: string): string {
@@ -320,12 +320,12 @@ export function memoryToMarkdown(memory: ProjectMemory, projectName: string): st
 }
 
 /**
- * 记忆 → 新会话提示词（供外部编辑器或会话客户端直接粘贴的上下文）。
+ * 记忆 → 会话上下文文本（供外部编辑器或会话客户端直接粘贴）。
  *
  * 刻意做成「可直接粘贴的一段话 + 结构」：先角色与目标，再事实，再约束，
  * 最后是「下一步」。不包含任何日志原文或源码。
  */
-export function memoryToPrompt(memory: ProjectMemory, projectName: string): string {
+export function memoryToContext(memory: ProjectMemory, projectName: string): string {
   const lines: string[] = []
   lines.push(`我在继续开发「${projectName}」。下面是我整理的项目上下文，请基于它给我建议或代码。`)
   lines.push('')
@@ -349,7 +349,7 @@ export function memoryToPrompt(memory: ProjectMemory, projectName: string): stri
   lines.push('约束：不要重复已经解决的问题；如果我的需求与已有决策冲突，先指出冲突再给方案。')
 
   const text = lines.join('\n')
-  const limit = BOARD_CONFIG.memory.maxPromptChars
+  const limit = BOARD_CONFIG.memory.maxContextChars
   return text.length <= limit ? text : `${text.slice(0, limit - 20)}\n…（已截断）`
 }
 
